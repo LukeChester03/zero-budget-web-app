@@ -1,58 +1,53 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import React from "react";
+import { motion, Variants } from "framer-motion";
+import { NavItem } from "@/app/components/NavItem";
+import { FaMoneyBillWave } from "react-icons/fa";
+
+// Entry animation for header
+const headerVariants: Variants = {
+  hidden: { opacity: 0, y: -20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
 
 export default function Header() {
-  const router = useRouter();
-
   const navItems = [
     { label: "Home", path: "/" },
     { label: "Past Budgets", path: "/previous-budgets" },
+    { label: "Create Budget", path: "/budget" },
     { label: "View Savings", path: "/savings" },
   ];
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      variants={headerVariants}
+      initial="hidden"
+      animate="visible"
       className="bg-white border-b-4 border-blue-300 shadow-sm"
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-10 py-8 relative">
+      <div className="max-w-7xl mx-auto grid grid-cols-3 items-center h-24 px-6 md:px-10">
         {/* Left nav */}
-        <nav className="flex space-x-10">
+        <nav className="hidden md:flex space-x-10 whitespace-nowrap">
           {navItems.map(({ label, path }) => (
-            <motion.button
-              key={label}
-              onClick={() => router.push(path)}
-              whileHover={{ scale: 1.1, color: "#3b82f6" }} // blue-500
-              whileFocus={{ scale: 1.1, color: "#3b82f6" }}
-              className="text-lg font-medium text-gray-700 cursor-pointer focus:outline-none"
-              aria-label={`Go to ${label}`}
-              tabIndex={0}
-              type="button"
-            >
+            <NavItem key={path} href={path}>
               {label}
-            </motion.button>
+            </NavItem>
           ))}
         </nav>
 
-        {/* Center title */}
-        <motion.button
-          onClick={() => router.push("/")}
-          whileHover={{ scale: 1.05, color: "#2563eb" }} // blue-600
-          whileFocus={{ scale: 1.05, color: "#2563eb" }}
-          className="text-4xl font-extrabold text-gray-900 cursor-pointer focus:outline-none select-none absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-          aria-label="Go to homepage"
-          tabIndex={0}
-          type="button"
-        >
-          Zero Budgeting
-        </motion.button>
+        {/* Center decorative logo */}
+        <div className="flex justify-center">
+          <FaMoneyBillWave className="text-6xl text-blue-600" aria-hidden="true" />
+        </div>
 
-        {/* Right side empty spacer for symmetry */}
-        <div className="w-40" aria-hidden="true" />
+        {/* Right decorative text */}
+        <div className="flex justify-end">
+          <span className="text-3xl font-extrabold text-gray-900">Zero Budgeting</span>
+        </div>
+
+        {/* Mobile placeholder for symmetry */}
+        <div className="md:hidden" />
       </div>
     </motion.header>
   );
