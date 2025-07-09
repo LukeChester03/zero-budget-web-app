@@ -1,22 +1,41 @@
 @import "tailwindcss";
 
+/* === Light Mode === */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f9fafb; /* Light gray background */
+  --foreground: #111827; /* Slate-900 text */
+  --surface: #ffffff; /* Containers */
+  --surface-muted: #f3f4f6; /* Input fields */
+  --border: #e5e7eb; /* Soft border */
+  --accent: #3b82f6; /* Blue-500 (action) */
+  --accent-hover: #2563eb; /* Blue-600 */
+  --positive: #10b981; /* Green-500 */
+  --negative: #ef4444; /* Red-500 */
+  --warning: #f59e0b; /* Amber-500 */
 }
 
+/* === Dark Mode === */
+.dark {
+  :root {
+    --background: #0f172a; /* Slate-900 */
+    --foreground: #f1f5f9; /* Slate-100 */
+    --surface: #1e293b; /* Slate-800 */
+    --surface-muted: #334155; /* Input background */
+    --border: #475569; /* Dark border */
+    --accent: #60a5fa; /* Blue-400 */
+    --accent-hover: #3b82f6; /* Blue-500 */
+    --positive: #34d399; /* Green-400 */
+    --negative: #f87171; /* Red-400 */
+    --warning: #fbbf24; /* Amber-400 */
+  }
+}
+
+/* Optional font system */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
