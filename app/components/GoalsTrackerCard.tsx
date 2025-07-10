@@ -157,7 +157,7 @@ export default function GoalsTrackerCard() {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             className={clsx(
-              "col-span-1 sm:col-span-4 w-full",
+              "min-w-full w-full",
               "px-4 py-3 border border-gray-300 rounded-lg",
               "text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
             )}

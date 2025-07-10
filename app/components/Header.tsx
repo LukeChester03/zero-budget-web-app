@@ -17,6 +17,7 @@ export default function Header() {
     { label: "Past Budgets", path: "/previous-budgets" },
     { label: "Create Budget", path: "/budget" },
     { label: "View Savings", path: "/savings" },
+    { label: "View Debts", path: "/loans" },
   ];
 
   return (
@@ -36,14 +37,9 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Center decorative logo */}
-        <div className="flex justify-center">
-          <FaMoneyBillWave className="text-6xl text-blue-600" aria-hidden="true" />
-        </div>
-
         {/* Right decorative text */}
         <div className="flex justify-end">
-          <span className="text-3xl font-extrabold text-gray-900">Zero Budgeting</span>
+          <FaMoneyBillWave className="text-6xl text-blue-600" aria-hidden="true" />
         </div>
 
         {/* Mobile placeholder for symmetry */}

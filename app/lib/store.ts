@@ -7,20 +7,19 @@ export type CategoryAllocation = {
   amount: number;
 };
 
+export interface Debt {
+  id: string;
+  name: string;
+  totalAmount: number;
+  months: number;
+  monthlyRepayment: number;
+}
+
 export type BudgetEntry = {
   id: string;
   month: string;
   income: number;
   allocations: CategoryAllocation[];
-};
-
-// 👇 New: a Goal type
-export type GoalEntry = {
-  id: string;
-  title: string;
-  saved: number;
-  target: number;
-  iconKey: string;
 };
 
 interface BudgetState {
@@ -29,10 +28,6 @@ interface BudgetState {
   customCategoriesBySection: { [section: string]: string[] };
   incomeLocked: boolean;
 
-  // 👇 New: goals slice
-  goals: GoalEntry[];
-
-  // existing actions...
   deleteBudget: (id: string) => void;
   addBudget: (entry: BudgetEntry) => void;
   updateIncome: (amount: number) => void;
@@ -43,10 +38,13 @@ interface BudgetState {
   addCustomCategory: (section: string, name: string) => void;
   getCustomCategories: (section: string) => string[];
 
-  // 👇 New: goal actions
-  addGoal: (goal: Omit<GoalEntry, "id">) => void;
-  deleteGoal: (id: string) => void;
-  updateGoalSaved: (id: string, saved: number) => void;
+  debts: Debt[];
+  addDebt: (debt: Omit<Debt, "id" | "monthlyRepayment">) => void;
+  updateDebt: (id: string, data: Partial<Omit<Debt, "id" | "monthlyRepayment">>) => void;
+  removeDebt: (id: string) => void;
+  getTotalMonthlyDebtRepayments: () => number;
+
+  getRepaidAmountForDebt: (debtName: string) => number;
 }
 
 export const useBudgetStore = create<BudgetState>()(
@@ -57,10 +55,6 @@ export const useBudgetStore = create<BudgetState>()(
       customCategoriesBySection: {},
       incomeLocked: false,
 
-      // 👇 initialize goals array
-      goals: [],
-
-      // existing setters…
       setIncomeLocked: (locked) => set({ incomeLocked: locked }),
 
       addBudget: (entry) =>
@@ -102,26 +96,54 @@ export const useBudgetStore = create<BudgetState>()(
 
       getCustomCategories: (section) => get().customCategoriesBySection[section] || [],
 
-      // 👇 New: add a goal (auto-generate an id)
-      addGoal: (goal) =>
-        set((state) => ({
-          goals: [...state.goals, { id: uuidv4(), ...goal }],
-        })),
+      debts: [],
 
-      // 👇 New: delete a goal by its id
-      deleteGoal: (id) =>
-        set((state) => ({
-          goals: state.goals.filter((g) => g.id !== id),
-        })),
+      addDebt: (debt) =>
+        set((state) => {
+          const monthlyRepayment = debt.months > 0 ? debt.totalAmount / debt.months : 0;
+          return {
+            debts: [...state.debts, { id: uuidv4(), monthlyRepayment, ...debt }],
+          };
+        }),
 
-      // 👇 New: update only the saved amount for a specific goal
-      updateGoalSaved: (id, saved) =>
-        set((state) => ({
-          goals: state.goals.map((g) => (g.id === id ? { ...g, saved } : g)),
-        })),
+      updateDebt: (id, data) =>
+        set((state) => {
+          const debts = state.debts.map((d) => {
+            if (d.id === id) {
+              const updated = { ...d, ...data };
+              const months = data.months ?? d.months;
+              const totalAmount = data.totalAmount ?? d.totalAmount;
+              updated.monthlyRepayment = months > 0 ? totalAmount / months : 0;
+              return updated;
+            }
+            return d;
+          });
+          return { debts };
+        }),
+
+      removeDebt: (id) => set((state) => ({ debts: state.debts.filter((d) => d.id !== id) })),
+
+      getTotalMonthlyDebtRepayments: () =>
+        get().debts.reduce((sum, debt) => sum + debt.monthlyRepayment, 0),
+
+      getRepaidAmountForDebt: (debtName: string) => {
+        const budgets = get().budgets;
+        let totalRepaid = 0;
+        const target = debtName.trim().toLowerCase();
+
+        budgets.forEach((budget) => {
+          budget.allocations.forEach((alloc) => {
+            if (alloc.category.trim().toLowerCase() === target) {
+              totalRepaid += alloc.amount;
+            }
+          });
+        });
+
+        return totalRepaid;
+      },
     }),
     {
-      name: "budget-storage", // keeps budgets, income & goals in localStorage
+      name: "budget-storage",
     }
   )
 );

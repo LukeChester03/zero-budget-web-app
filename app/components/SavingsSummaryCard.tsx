@@ -61,7 +61,7 @@ export default function SavingsSummaryCard() {
       animate="visible"
       whileHover="hover"
       className={clsx(
-        "w-full max-w-md mx-auto p-8 bg-white",
+        "w-full h-full mx-auto p-8 bg-white",
         "rounded-3xl shadow-2xl border border-gray-200",
         "flex flex-col items-center text-center",
         "space-y-6 transition-shadow"

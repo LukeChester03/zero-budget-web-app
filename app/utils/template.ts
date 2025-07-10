@@ -22,10 +22,6 @@ export const budgetTemplate: BudgetCategoryGroup[] = [
     ],
   },
   {
-    title: "Debt Repayments",
-    categories: ["Credit Card", "Loan", "Overdraft"],
-  },
-  {
     title: "Lifestyle",
     categories: ["Subscriptions", "Dining Out", "Entertainment", "Holiday Fund"],
   },
@@ -36,9 +32,5 @@ export const budgetTemplate: BudgetCategoryGroup[] = [
   {
     title: "Buffer / Miscellaneous",
     categories: ["Unexpected", "Gifts", "Other"],
-  },
-  {
-    title: "One-off Payments",
-    categories: [],
   },
 ];

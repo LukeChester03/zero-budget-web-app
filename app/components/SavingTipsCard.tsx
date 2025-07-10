@@ -38,7 +38,7 @@ export default function SavingsTipsCard() {
     >
       <h3 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
         <FaLightbulb className="text-yellow-500" />
-        <span>💡 Savings Tips</span>
+        <span>Savings Tips</span>
       </h3>
 
       <div className="space-y-3">

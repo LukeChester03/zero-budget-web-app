@@ -17,6 +17,12 @@ export default function Home() {
   const handleViewBudgets = () => {
     router.push("/previous-budgets");
   };
+  const handleLoanManagement = () => {
+    router.push("/loans");
+  };
+  const handleAnalysis = () => {
+    router.push("/analysis");
+  };
 
   return (
     <motion.main
@@ -46,26 +52,23 @@ export default function Home() {
 
         <LandingCard
           title="View Previous Budgets"
-          description="Review and edit your past budgets."
+          description="Review your past budgets."
           icon={<FaFolderOpen />}
           onClick={handleViewBudgets}
         />
+        <LandingCard
+          title="View Debts"
+          description="Review how much you owe to better track it."
+          icon={<FaFolderOpen />}
+          onClick={handleLoanManagement}
+        />
+        {/* <LandingCard
+          title="AI Analysis"
+          description="AI analysis of you finances."
+          icon={<FaFolderOpen />}
+          onClick={handleAnalysis}
+        /> */}
       </div>
-
-      <section className="max-w-3xl mx-auto mt-20 text-center text-gray-600 dark:text-gray-300 space-y-6">
-        <h2 className="text-3xl font-semibold">Why Choose Zero Budgeting?</h2>
-        <p>
-          Our app empowers you to allocate every pound intentionally, helping you save more, reduce
-          waste, and take control of your financial future.
-        </p>
-        <ul className="list-disc list-inside space-y-2 max-w-md mx-auto text-left">
-          <li>Simple, intuitive monthly budgeting</li>
-          <li>Track savings across multiple categories</li>
-          <li>Visualize your spending and savings progress</li>
-          <li>Review and adjust previous budgets anytime</li>
-          <li>Secure and private—your data stays with you</li>
-        </ul>
-      </section>
     </motion.main>
   );
 }
