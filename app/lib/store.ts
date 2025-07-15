@@ -15,6 +15,14 @@ export interface Debt {
   monthlyRepayment: number;
 }
 
+export interface Goal {
+  id: string;
+  title: string;
+  saved: number;
+  target: number;
+  iconKey: "emergency" | "vacation" | "car" | "home" | "piggy";
+}
+
 export type BudgetEntry = {
   id: string;
   month: string;
@@ -27,6 +35,8 @@ interface BudgetState {
   income: number;
   customCategoriesBySection: { [section: string]: string[] };
   incomeLocked: boolean;
+  debts: Debt[];
+  goals: Goal[];
 
   deleteBudget: (id: string) => void;
   addBudget: (entry: BudgetEntry) => void;
@@ -37,13 +47,15 @@ interface BudgetState {
   setIncomeLocked: (locked: boolean) => void;
   addCustomCategory: (section: string, name: string) => void;
   getCustomCategories: (section: string) => string[];
-
-  debts: Debt[];
   addDebt: (debt: Omit<Debt, "id" | "monthlyRepayment">) => void;
   updateDebt: (id: string, data: Partial<Omit<Debt, "id" | "monthlyRepayment">>) => void;
   removeDebt: (id: string) => void;
   getTotalMonthlyDebtRepayments: () => number;
   getRepaidAmountForDebt: (debtName: string) => number;
+  addGoal: (goal: Omit<Goal, "id" | "saved">) => void;
+  updateGoal: (id: string, data: Partial<Omit<Goal, "id">>) => void;
+  deleteGoal: (id: string) => void;
+  getSavedAmountForGoal: (goalTitle: string) => number;
 }
 
 export const useBudgetStore = create<BudgetState>()(
@@ -53,13 +65,17 @@ export const useBudgetStore = create<BudgetState>()(
       income: 0,
       customCategoriesBySection: {},
       incomeLocked: false,
+      debts: [],
+      goals: [],
 
       setIncomeLocked: (locked) => set({ incomeLocked: locked }),
 
-      addBudget: (entry) =>
+      addBudget: (entry) => {
+        console.log("Adding budget:", entry);
         set((state) => ({
           budgets: [...state.budgets, entry],
-        })),
+        }));
+      },
 
       updateIncome: (amount) => set(() => ({ income: amount })),
 
@@ -94,8 +110,6 @@ export const useBudgetStore = create<BudgetState>()(
         }),
 
       getCustomCategories: (section) => get().customCategoriesBySection[section] || [],
-
-      debts: [],
 
       addDebt: (debt) =>
         set((state) => {
@@ -139,6 +153,37 @@ export const useBudgetStore = create<BudgetState>()(
         });
 
         return totalRepaid;
+      },
+
+      addGoal: (goal) =>
+        set((state) => ({
+          goals: [...state.goals, { id: crypto.randomUUID(), saved: 0, ...goal }],
+        })),
+
+      updateGoal: (id, data) =>
+        set((state) => ({
+          goals: state.goals.map((g) => (g.id === id ? { ...g, ...data } : g)),
+        })),
+
+      deleteGoal: (id) =>
+        set((state) => ({
+          goals: state.goals.filter((g) => g.id !== id),
+        })),
+
+      getSavedAmountForGoal: (goalTitle: string) => {
+        const budgets = get().budgets;
+        let totalSaved = 0;
+        const target = goalTitle.trim().toLowerCase();
+
+        budgets.forEach((budget) => {
+          budget.allocations.forEach((alloc) => {
+            if (alloc.category.trim().toLowerCase() === target) {
+              totalSaved += alloc.amount;
+            }
+          });
+        });
+
+        return totalSaved;
       },
     }),
     {
