@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import AddCategoryModal from "./AddCategoryModal";
 import { motion, Variants } from "framer-motion";
 import clsx from "clsx";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // — Motion variants —
 const containerVariants: Variants = {
@@ -43,24 +45,64 @@ export default function BudgetForm() {
   const getCustomCategories = useBudgetStore((s) => s.getCustomCategories);
   const addCustomCategory = useBudgetStore((s) => s.addCustomCategory);
   const debts = useBudgetStore((s) => s.debts);
+  const budgets = useBudgetStore((s) => s.budgets);
 
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  // States
   const [month, setMonth] = useState("");
   const [amounts, setAmounts] = useState<{ [cat: string]: number }>({});
   const [lockedInputs, setLockedInputs] = useState<{ [cat: string]: boolean }>({});
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize amounts after mount (client-only)
+  // Normalize month format from YYYY-MM to MMMM YYYY
+  const normalizeMonth = (input: string) => {
+    if (!input) return new Date().toLocaleString("default", { month: "long", year: "numeric" });
+    const [year, month] = input.split("-");
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Get previous month's budget
+  const getPreviousMonthBudget = (currentMonth: string) => {
+    const [monthName, year] = currentMonth.split(" ");
+    const currentDate = new Date(`${monthName} 1, ${year}`);
+    const previousDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
+    const previousMonth = previousDate.toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    });
+    return budgets.find((b) => b.month === previousMonth);
+  };
+
+  // Initialize amounts and lockedInputs on mount
   useEffect(() => {
+    // Initialize with debt amounts
     const initialAmounts = debts.reduce((acc, debt) => {
       acc[debt.name] = debt.monthlyRepayment;
       return acc;
     }, {} as { [cat: string]: number });
+
+    // Get previous month's budget to prefill non-debt categories
+    const currentMonth = normalizeMonth(month);
+    const previousBudget = getPreviousMonthBudget(currentMonth);
+
+    const newLocked: { [cat: string]: boolean } = {};
+    if (previousBudget) {
+      // Prefill non-debt allocations from previous month
+      previousBudget.allocations.forEach(({ category, amount }) => {
+        if (!debts.some((d) => d.name === category)) {
+          initialAmounts[category] = amount;
+          newLocked[category] = true; // Lock non-debt categories
+        }
+      });
+    }
+
     setAmounts(initialAmounts);
+    setLockedInputs(newLocked);
     setInitialized(true);
-  }, [debts]);
+  }, [debts, month, budgets]);
 
   if (!initialized) return null; // or loading spinner
 
@@ -72,6 +114,8 @@ export default function BudgetForm() {
 
   const totalAllocated = getBudgetTotal(allocationsArray);
   const remaining = getBudgetRemaining(allocationsArray, income);
+
+  console.log(remaining, "REMAINING");
 
   const statusColor =
     remaining > 0 ? "text-amber-500" : remaining < 0 ? "text-red-500" : "text-green-600";
@@ -85,23 +129,60 @@ export default function BudgetForm() {
   };
 
   const handleSubmit = () => {
+    const normalizedMonth = normalizeMonth(month);
+    if (normalizeMonth === null) {
+      console.log("MONTH NOT FILLED IN");
+      toast.error("Please fill in the month!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
+    // Check if a budget already exists for this month
+    if (budgets.some((b) => b.month === normalizedMonth)) {
+      toast.error("Budget for this month already exists. Please edit existing record.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
+
     const allocations = allocationsArray.filter(
       (a) => a.amount > 0 && !debts.some((d) => d.name === a.category)
     );
     addBudget({
       id: uuidv4(),
-      month: month || new Date().toLocaleString("default", { month: "long", year: "numeric" }),
+      month: normalizedMonth,
       income,
       allocations,
     });
+    // Reset form to debt amounts only
+    const resetAmounts = debts.reduce((acc, debt) => {
+      acc[debt.name] = debt.monthlyRepayment;
+      return acc;
+    }, {} as { [cat: string]: number });
+    setAmounts(resetAmounts);
     setMonth("");
-    // Keep all debt amounts intact, but keep user amounts as they submitted
-    // Lock all user input categories on save
-    const newLocked: { [cat: string]: boolean } = {};
-    allocations.forEach((a) => {
-      newLocked[a.category] = true;
+    setLockedInputs({}); // Unlock all non-debt inputs for next budget
+    toast.success("Budget Successfully Saved!", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
     });
-    setLockedInputs(newLocked);
   };
 
   const toggleEdit = (category: string) => {
@@ -117,7 +198,6 @@ export default function BudgetForm() {
     if (activeSection) addCustomCategory(activeSection, name);
   };
 
-  // Debts not included in any category group or custom categories
   const uncategorizedDebts = debts.filter(
     (debt) =>
       !budgetTemplate.some((group) =>
@@ -163,7 +243,6 @@ export default function BudgetForm() {
         {budgetTemplate.map((group) => {
           const custom = getCustomCategories(group.title);
           const allCategories = [...group.categories, ...custom];
-
           const debtsInGroup = debts.filter((d) => allCategories.includes(d.name));
           const userCategories = allCategories.filter((cat) => !debts.some((d) => d.name === cat));
 
@@ -316,6 +395,7 @@ export default function BudgetForm() {
         onClose={() => setModalOpen(false)}
         onConfirm={confirmAddCategory}
       />
+      <ToastContainer />
     </motion.div>
   );
 }
