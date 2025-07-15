@@ -43,7 +43,6 @@ interface BudgetState {
   updateDebt: (id: string, data: Partial<Omit<Debt, "id" | "monthlyRepayment">>) => void;
   removeDebt: (id: string) => void;
   getTotalMonthlyDebtRepayments: () => number;
-
   getRepaidAmountForDebt: (debtName: string) => number;
 }
 

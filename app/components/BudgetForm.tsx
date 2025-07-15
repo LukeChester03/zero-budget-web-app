@@ -130,9 +130,10 @@ export default function BudgetForm() {
 
   const handleSubmit = () => {
     const normalizedMonth = normalizeMonth(month);
-    if (normalizeMonth === null) {
+    // Check if month is valid
+    if (!normalizedMonth) {
       console.log("MONTH NOT FILLED IN");
-      toast.error("Please fill in the month!", {
+      toast.error("Please select a valid month!", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -157,15 +158,16 @@ export default function BudgetForm() {
       return;
     }
 
-    const allocations = allocationsArray.filter(
-      (a) => a.amount > 0 && !debts.some((d) => d.name === a.category)
-    );
+    // Save all allocations (including debts)
+    const allocations = allocationsArray.filter((a) => a.amount > 0);
+    console.log("Saving budget with allocations:", allocations); // Debugging
     addBudget({
       id: uuidv4(),
       month: normalizedMonth,
       income,
       allocations,
     });
+
     // Reset form to debt amounts only
     const resetAmounts = debts.reduce((acc, debt) => {
       acc[debt.name] = debt.monthlyRepayment;

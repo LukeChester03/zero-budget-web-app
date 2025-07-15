@@ -37,28 +37,9 @@ export default function DebtsForm() {
   const updateDebt = useBudgetStore((s) => s.updateDebt);
   const removeDebt = useBudgetStore((s) => s.removeDebt);
   const income = useBudgetStore((s) => s.income);
+  const getRepaidAmountForDebt = useBudgetStore((s) => s.getRepaidAmountForDebt);
 
-  // Calculate total amount repaid for a given debt name by summing allocations in all budgets
-  const calculateRepaidAmount = (debtName: string): number => {
-    console.log("Calculating repaid amount for debt:", debtName);
-    console.log("Budgets in store:", budgets);
-    let total = 0;
-    budgets.forEach((budget) => {
-      budget.allocations.forEach((alloc) => {
-        console.log(`Allocation: category="${alloc.category}", amount=${alloc.amount}`);
-      });
-      const allocation = budget.allocations.find(
-        (a) => a.category.trim().toLowerCase() === debtName.trim().toLowerCase()
-      );
-      if (allocation) {
-        total += allocation.amount;
-      }
-    });
-    console.log(`Repaid amount for "${debtName}":`, total);
-    return total;
-  };
-
-  // Initialize local state for debt creation (without repaidAmount, handled separately)
+  // Initialize local state for debt creation
   const [localDebts, setLocalDebts] = useState<DebtInput[]>(
     debts.map((d) => ({
       id: d.id,
@@ -83,18 +64,22 @@ export default function DebtsForm() {
     );
 
     // Sync repayment tracking, calculate repaidAmount from past budgets
-    setRepaymentDebts(
-      debts
-        .filter((d) => d.totalAmount > 0 && d.months > 0)
-        .map((d) => ({
+    const updatedRepaymentDebts = debts
+      .filter((d) => d.totalAmount > 0 && d.months > 0)
+      .map((d) => {
+        const repaidAmount = getRepaidAmountForDebt(d.name);
+        console.log(`Debt: ${d.name}, Repaid Amount: ${repaidAmount}`); // Debugging
+        return {
           id: d.id,
           name: d.name,
           totalAmount: d.totalAmount,
           months: d.months,
-          repaidAmount: calculateRepaidAmount(d.name),
-        }))
-    );
-  }, [debts, budgets]);
+          repaidAmount,
+        };
+      });
+    setRepaymentDebts(updatedRepaymentDebts);
+    console.log("Budgets in store:", budgets); // Debugging
+  }, [debts, budgets, getRepaidAmountForDebt]);
 
   const addNewDebtRow = (): void => {
     setLocalDebts((prev) => [
@@ -140,7 +125,7 @@ export default function DebtsForm() {
     setLocalDebts((prev) => prev.filter((d) => d.id !== id));
   };
 
-  // Calculate total monthly repayments (sum of totalAmount/months)
+  // Calculate total monthly repayments
   const totalMonthlyRepayments = localDebts.reduce((acc, d) => {
     const amt = parseFloat(d.totalAmount);
     const mths = parseInt(d.months);
@@ -150,7 +135,7 @@ export default function DebtsForm() {
     return acc;
   }, 0);
 
-  // Calculate total remaining debt (totalAmount - repaidAmount)
+  // Calculate total remaining debt
   const totalRemainingDebt = repaymentDebts.reduce((acc, d) => {
     return acc + (d.totalAmount - d.repaidAmount);
   }, 0);
